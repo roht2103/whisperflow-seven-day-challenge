@@ -1,10 +1,12 @@
 import {
   saveSubmission,
   getSubmissions,
+  deleteSubmission,
+  clearAllSubmissions,
   registerVisitor,
   updateTracking,
   getAnalyticsResults,
-} from './db.js';
+} from '../api/db.js';
 
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -53,7 +55,7 @@ export function funnelApiPlugin() {
               return;
             }
 
-            const submission = saveSubmission({
+            const submission = await saveSubmission({
               name,
               email,
               company,
@@ -75,11 +77,38 @@ export function funnelApiPlugin() {
         // 2. GET /api/submissions
         if (url === '/api/submissions' && req.method === 'GET') {
           try {
-            const list = getSubmissions();
+            const list = await getSubmissions();
             sendJson(res, 200, { success: true, submissions: list });
           } catch (err) {
             console.error('API Error in GET /api/submissions:', err);
             sendJson(res, 500, { error: 'Failed to retrieve submissions.' });
+          }
+          return;
+        }
+
+        // 2b. DELETE /api/submissions
+        if (url === '/api/submissions' && req.method === 'DELETE') {
+          try {
+            const parsedUrl = new URL(req.url, 'http://localhost');
+            const id = parsedUrl.searchParams.get('id');
+            const clearAll = parsedUrl.searchParams.get('all') === 'true';
+
+            if (clearAll) {
+              await clearAllSubmissions();
+              sendJson(res, 200, { success: true, message: 'All submissions cleared.' });
+              return;
+            }
+
+            if (!id) {
+              sendJson(res, 400, { error: 'Submission ID is required.' });
+              return;
+            }
+
+            await deleteSubmission(id);
+            sendJson(res, 200, { success: true, message: 'Submission deleted.' });
+          } catch (err) {
+            console.error('API Error in DELETE /api/submissions:', err);
+            sendJson(res, 500, { error: 'Failed to delete submission.' });
           }
           return;
         }
@@ -93,7 +122,7 @@ export function funnelApiPlugin() {
               sendJson(res, 400, { error: 'visitorId and variant required.' });
               return;
             }
-            const record = registerVisitor({ visitorId, variant });
+            const record = await registerVisitor({ visitorId, variant });
             sendJson(res, 200, { success: true, visitor: record });
           } catch (err) {
             console.error('API Error in /api/analytics/visitor:', err);
@@ -111,7 +140,7 @@ export function funnelApiPlugin() {
               sendJson(res, 400, { error: 'visitorId required.' });
               return;
             }
-            updateTracking({ visitorId, scrollDepth, stage, reachedContact });
+            await updateTracking({ visitorId, scrollDepth, stage, reachedContact });
             sendJson(res, 200, { success: true });
           } catch (err) {
             console.error('API Error in /api/analytics/track:', err);
@@ -123,7 +152,7 @@ export function funnelApiPlugin() {
         // 5. GET /api/analytics/results
         if (url === '/api/analytics/results' && req.method === 'GET') {
           try {
-            const results = getAnalyticsResults();
+            const results = await getAnalyticsResults();
             sendJson(res, 200, { success: true, results });
           } catch (err) {
             console.error('API Error in GET /api/analytics/results:', err);
@@ -136,9 +165,7 @@ export function funnelApiPlugin() {
       });
     },
     configurePreviewServer(server) {
-      // Also enable in vite preview
       this.configureServer(server);
     },
   };
 }
-

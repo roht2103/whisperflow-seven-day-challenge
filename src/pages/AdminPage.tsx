@@ -7,6 +7,7 @@ import {
   Clock,
   BarChart3,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 
 interface Submission {
@@ -38,6 +39,30 @@ export const AdminPage: React.FC = () => {
       setError(err.message || 'Failed to load submissions.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete this submission from database?')) return;
+    try {
+      const res = await fetch(`/api/submissions?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete submission');
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+    } catch (err: any) {
+      alert(err.message || 'Error deleting submission');
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!window.confirm('Are you sure you want to clear ALL submissions? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/submissions?all=true`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to clear all submissions');
+      setSubmissions([]);
+    } catch (err: any) {
+      alert(err.message || 'Error clearing submissions');
     }
   };
 
@@ -116,6 +141,16 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono">
+            {/* {submissions.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="rounded-none px-3 py-2 bg-red-950/20 hover:bg-red-950/40 border border-red-500/30 text-red-400 text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Wipe all submissions"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>CLEAR ALL</span>
+              </button>
+            )} */}
             <div className="rounded-none px-4 py-2 bg-[#090b0e] border border-amber-500/30 text-amber-400">
               TOTAL: <strong className="text-white ml-1">{submissions.length}</strong>
             </div>
@@ -187,10 +222,20 @@ export const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:items-end gap-1.5 text-xs font-mono">
-                    <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                      <Clock className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{formatDate(sub.created_at)}</span>
+                  <div className="flex flex-col sm:items-end gap-2 text-xs font-mono">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{formatDate(sub.created_at)}</span>
+                      </div>
+                      {/* <button
+                        onClick={() => handleDelete(sub.id)}
+                        className="rounded-none px-2 py-0.5 bg-red-950/20 hover:bg-red-950/50 border border-red-500/25 hover:border-red-500/60 text-red-400 text-[10px] transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Delete submission"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>DELETE</span>
+                      </button> */}
                     </div>
                     <a
                       href={`mailto:${sub.email}`}
