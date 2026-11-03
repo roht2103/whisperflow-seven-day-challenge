@@ -3,6 +3,7 @@ import {
   getSubmissions,
   deleteSubmission,
   clearAllSubmissions,
+  getStorageMode,
 } from './db.js';
 import { parseBody, sendJson } from './_utils.js';
 
@@ -42,7 +43,8 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const submissions = await getSubmissions();
-      return sendJson(res, 200, { success: true, submissions });
+      const storageMode = getStorageMode();
+      return sendJson(res, 200, { success: true, submissions, storageMode });
     } catch (err) {
       console.error('API Error in GET /api/submissions:', err);
       return sendJson(res, 500, { error: 'Failed to retrieve submissions.' });

@@ -23,6 +23,7 @@ export const AdminPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [storageMode, setStorageMode] = useState<'turso' | 'ephemeral' | null>(null);
 
   const fetchSubmissions = async () => {
     setIsLoading(true);
@@ -34,6 +35,7 @@ export const AdminPage: React.FC = () => {
         throw new Error(data.error || 'Failed to fetch submissions.');
       }
       setSubmissions(data.submissions || []);
+      setStorageMode(data.storageMode || (data.storage === 'turso' ? 'turso' : 'ephemeral'));
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to load submissions.');
@@ -141,7 +143,7 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono">
-            {/* {submissions.length > 0 && (
+            {submissions.length > 0 && (
               <button
                 onClick={handleClearAll}
                 className="rounded-none px-3 py-2 bg-red-950/20 hover:bg-red-950/40 border border-red-500/30 text-red-400 text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -150,13 +152,34 @@ export const AdminPage: React.FC = () => {
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>CLEAR ALL</span>
               </button>
-            )} */}
+            )}
             <div className="rounded-none px-4 py-2 bg-[#090b0e] border border-amber-500/30 text-amber-400">
               TOTAL: <strong className="text-white ml-1">{submissions.length}</strong>
             </div>
             <div className="rounded-none px-3 py-2 bg-[#090b0e] border border-white/10 text-slate-400">
               SORT: <span className="text-slate-200 ml-1">NEWEST FIRST</span>
             </div>
+          </div>
+        </div>
+
+        {/* Database Engine Status Banner */}
+        <div className="rounded-none p-4 bg-[#090b0e] border border-white/10 mb-8 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                storageMode === 'turso'
+                  ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]'
+                  : 'bg-amber-400 shadow-[0_0_8px_#fbbf24]'
+              }`}
+            />
+            <span className="text-slate-300">
+              {storageMode === 'turso'
+                ? 'TURSO CLOUD SQLITE: Submissions persist in cloud database across all recruiter visits.'
+                : 'LOCAL / EPHEMERAL MODE: In-memory/local SQLite active. Add TURSO_DATABASE_URL to Vercel for persistence.'}
+            </span>
+          </div>
+          <div className="text-[11px] text-slate-500">
+            ENGINE: {storageMode === 'turso' ? 'TURSO (HTTPS PIPELINE)' : 'LOCAL SQLITE'}
           </div>
         </div>
 
@@ -228,14 +251,14 @@ export const AdminPage: React.FC = () => {
                         <Clock className="w-3.5 h-3.5 text-slate-500" />
                         <span>{formatDate(sub.created_at)}</span>
                       </div>
-                      {/* <button
+                      <button
                         onClick={() => handleDelete(sub.id)}
                         className="rounded-none px-2 py-0.5 bg-red-950/20 hover:bg-red-950/50 border border-red-500/25 hover:border-red-500/60 text-red-400 text-[10px] transition-colors flex items-center gap-1 cursor-pointer"
                         title="Delete submission"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>DELETE</span>
-                      </button> */}
+                      </button>
                     </div>
                     <a
                       href={`mailto:${sub.email}`}

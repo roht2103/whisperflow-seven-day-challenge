@@ -6,16 +6,31 @@ import { DatabaseSync } from 'node:sqlite';
 // Determine Database Mode:
 // 1. If TURSO_DATABASE_URL (or LIBSQL_URL) is present -> Cloud SQLite (Turso) over HTTPS
 // 2. Otherwise -> Local SQLite using node:sqlite (data/ locally or /tmp on Vercel)
-const tursoUrl = process.env.TURSO_DATABASE_URL || process.env.LIBSQL_URL || '';
-const tursoToken = process.env.TURSO_AUTH_TOKEN || process.env.LIBSQL_AUTH_TOKEN || '';
+const rawTursoUrl = process.env.TURSO_DATABASE_URL || process.env.LIBSQL_URL || '';
+const rawTursoToken = process.env.TURSO_AUTH_TOKEN || process.env.LIBSQL_AUTH_TOKEN || '';
 
-const isTurso = Boolean(tursoUrl && tursoToken);
+const tursoUrl = rawTursoUrl.trim();
+const tursoToken = rawTursoToken.trim();
+
+export const isTurso = Boolean(tursoUrl && tursoToken);
+
+export function getStorageMode() {
+  return isTurso ? 'turso' : 'ephemeral';
+}
 
 // ============================================================================
 // 1. TURSO CLOUD SQLITE HTTP ADAPTER (Zero external dependencies)
 // ============================================================================
 async function executeTurso(statements) {
-  const httpsUrl = tursoUrl.replace('libsql://', 'https://').replace(/\/$/, '');
+  let httpsUrl = tursoUrl;
+  if (!httpsUrl.startsWith('http://') && !httpsUrl.startsWith('https://')) {
+    if (httpsUrl.startsWith('libsql://')) {
+      httpsUrl = httpsUrl.replace('libsql://', 'https://');
+    } else {
+      httpsUrl = 'https://' + httpsUrl;
+    }
+  }
+  httpsUrl = httpsUrl.replace(/\/$/, '');
   
   const requests = statements.map((stmt) => {
     const sql = typeof stmt === 'string' ? stmt : stmt.sql;

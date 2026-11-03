@@ -3,29 +3,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/submissions",
-      "destination": "/api/submissions"
-    },
-    {
-      "source": "/api/analytics/visitor",
-      "destination": "/api/analytics/visitor"
-    },
-    {
-      "source": "/api/analytics/track",
-      "destination": "/api/analytics/track"
-    },
-    {
-      "source": "/api/analytics/results",
-      "destination": "/api/analytics/results"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
-    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
 }
-

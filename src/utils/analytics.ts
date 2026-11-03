@@ -35,9 +35,15 @@ export function initVisitor(): { visitorId: string; variant: ABVariant } {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ visitorId, variant }),
-  }).catch((err) => {
-    console.debug('Analytics visitor init error:', err);
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        console.warn('Analytics visitor registration returned status:', res.status);
+      }
+    })
+    .catch((err) => {
+      console.debug('Analytics visitor init error:', err);
+    });
 
   return { visitorId, variant };
 }
